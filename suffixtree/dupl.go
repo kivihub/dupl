@@ -66,30 +66,36 @@ func (t *STree) FindDuplOver(threshold int) <-chan Match {
 	return ch
 }
 
+// DPS遍历后缀树
+// length为根结点走完parent的长度
 func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *contextList {
 	s := parent.state
 
+	// 记录后缀树从根结点到叶子结点路径的起始Pos(在STree.data的位置)
 	cl := newContextList()
 
+	// 叶子结点
 	if len(s.trans) == 0 {
 		pl := newPosList()
-		start := parent.end + 1 - Pos(length)
+		start := parent.end + 1 - Pos(length) // start为重复的起始Pos
 		pl.add(start)
 		ch := 0
 		if start > 0 {
-			ch = s.tree.data[start-1].Val()
+			ch = s.tree.data[start-1].Val() // ch为重复的起始Pos对应的字符/值
 		}
-		cl.lists[ch] = pl
+		cl.lists[ch] = pl // ch和start 两者结合length就可以获取重复的内容
 		return cl
 	}
 
+	// 非叶子结点：递归遍历
 	for _, t := range s.trans {
 		ln := length + t.len()
 		cl2 := walkTrans(t, ln, threshold, ch)
-		if ln >= threshold {
+		if ln >= threshold { // 感觉不加也可以，因为下面有length阈值判断
 			cl.append(cl2)
 		}
 	}
+	// 非叶子结点，判断超过threshold则，把{STree.data}的起始Pos结合和长度返回
 	if length >= threshold && len(cl.lists) > 1 {
 		m := Match{cl.getAll(), Pos(length)}
 		ch <- m

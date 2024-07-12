@@ -27,6 +27,7 @@ func Parse(fchan chan string) chan []*syntax.Node {
 	schan := make(chan []*syntax.Node)
 	go func() {
 		for ast := range achan {
+			// seq是一个.go文件的所有SyntaxNode扁平集合
 			seq := syntax.Serialize(ast)
 			schan <- seq
 		}

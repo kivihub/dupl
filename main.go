@@ -57,6 +57,7 @@ func main() {
 	<-done
 
 	// finish stream
+	// 后缀树增加{结束节点$}
 	t.Update(&syntax.Node{Type: -1})
 
 	if *verbose {

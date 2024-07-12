@@ -18,11 +18,11 @@ type Token interface {
 
 // STree is a struct representing a suffix tree.
 type STree struct {
-	data     []Token
-	root     *state
-	auxState *state // auxiliary state
+	data     []Token // AST的Type, 有对应的[]Node变量，见buildtree.go#BuildTree
+	root     *state  // 根节点
+	auxState *state  // auxiliary state，根节点的{后缀连接}
 
-	// active point
+	// active point，活动节点
 	s          *state
 	start, end Pos
 }
@@ -58,15 +58,25 @@ func (t *STree) update() {
 	var r *state
 	for {
 		var endPoint bool
+
+		// 查看新的节点是否已包含在{活动节点}的tran中，如果不包含则分裂{活动节点}的对应tran
 		r, endPoint = t.testAndSplit(s, start, end-1)
+
+		// 是否需要新增节点，如果是endPoint则不需要新增，之前的tran已包含
 		if endPoint {
 			break
 		}
+		// 增加新的{后缀节点}
 		r.fork(end)
+
 		if oldr != t.root {
+			// 建立{后缀链接} [后缀链接是为了新建后缀节点后，快速找到新的活动节点]
+			// 详情：oldr和r两个为for循环内分裂产生的后缀节点，上一次分裂产生的节点 指向 新分裂产生的节点
 			oldr.linkState = r
 		}
 		oldr = r
+
+		// 变更{活动节点}
 		s, start = t.canonize(s.linkState, start, end-1)
 	}
 	if oldr != t.root {
@@ -83,13 +93,14 @@ func (t *STree) update() {
 // a c-transition. If not, then state (exs, (start, end)) is made
 // explicit (if not already so).
 func (t *STree) testAndSplit(s *state, start, end Pos) (exs *state, endPoint bool) {
-	c := t.data[t.end]
-	if start <= end {
+	c := t.data[t.end] // 新增的节点
+	if start <= end {  // 使用end-start表示reminder>0，有未创建的后缀
 		tr := s.findTran(t.data[start])
 		splitPoint := tr.start + end - start + 1
 		if t.data[splitPoint].Val() == c.Val() {
 			return s, true
 		}
+		// 分裂已有的tran
 		// make the (s, (start, end)) state explicit
 		newSt := newState(s.tree)
 		newSt.addTran(splitPoint, tr.end, tr.state)
@@ -110,12 +121,13 @@ func (t *STree) canonize(s *state, start, end Pos) (*state, Pos) {
 	if s == t.auxState {
 		s, start = t.root, start+1
 	}
-	if start > end {
+	if start > end { // reminder为0，即不需要增加新的后缀节点
 		return s, start
 	}
 
 	var tr *tran
 	for {
+		// 找到活动节点的对应后缀的边
 		if start <= end {
 			tr = s.findTran(t.data[start])
 			if tr == nil {
@@ -123,15 +135,18 @@ func (t *STree) canonize(s *state, start, end Pos) (*state, Pos) {
 					t.data[start].Val(), start))
 			}
 		}
+		// 如果该边长度大于新增前缀，则结束
 		if tr.end-tr.start > end-start {
 			break
 		}
+		// 如果该边长度小于新增的前缀，则继续向下找
 		start += tr.end - tr.start + 1
 		s = tr.state
 	}
 	if s == nil {
 		panic("there should always be some suffix link resolution")
 	}
+	// 返回新的活动节点位置
 	return s, start
 }
 
@@ -157,10 +172,11 @@ func printState(buf *bytes.Buffer, s *state, ident int) {
 }
 
 // state is an explicit state of the suffix tree.
+// 后缀树的节点
 type state struct {
-	tree      *STree
-	trans     []*tran
-	linkState *state
+	tree      *STree  // 所在的树
+	trans     []*tran // 扇出的线
+	linkState *state  // 后缀链接
 }
 
 func newState(t *STree) *state {
@@ -193,9 +209,10 @@ func (s *state) findTran(c Token) *tran {
 }
 
 // tran represents a state's transition.
+// 后缀树的边
 type tran struct {
-	start, end Pos
-	state      *state
+	start, end Pos    // 对应{STree.data}的起始结束坐标
+	state      *state // 指的是：end的节点/state
 }
 
 func newTran(start, end Pos, s *state) *tran {
