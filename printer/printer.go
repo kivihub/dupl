@@ -1,6 +1,6 @@
 package printer
 
-import "github.com/mibk/dupl/syntax"
+import "github.com/kivihub/dupl/syntax"
 
 type ReadFile func(filename string) ([]byte, error)
 

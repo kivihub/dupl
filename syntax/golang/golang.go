@@ -5,7 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 
-	"github.com/mibk/dupl/syntax"
+	"github.com/kivihub/dupl/syntax"
 )
 
 const (
@@ -84,6 +84,7 @@ func (t *transformer) trans(node ast.Node) (o *syntax.Node) {
 	o = syntax.NewNode()
 	o.Filename = t.filename
 	st, end := node.Pos(), node.End()
+	o.StartLine, o.EndLine = t.fileset.Position(st).Line, t.fileset.Position(end).Line
 	o.Pos, o.End = t.fileset.File(st).Offset(st), t.fileset.File(end).Offset(end)
 
 	switch n := node.(type) {

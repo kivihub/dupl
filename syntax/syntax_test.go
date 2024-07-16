@@ -1,6 +1,9 @@
 package syntax
 
-import "testing"
+import (
+	"github.com/kivihub/dupl/suffixtree"
+	"testing"
+)
 
 func TestSerialization(t *testing.T) {
 	n := genNodes(7)
@@ -40,6 +43,48 @@ func compareSeries(t *testing.T, stream []*Node, owns []int) {
 			t.Errorf("got %d, want %d", item.Owns, owns[i])
 		}
 	}
+}
+
+func TestGetFuncIndexes(t *testing.T) {
+	nodeSeq := "f8 a2 a0 a0 a4 a3 a2 a0 a0 f2 a0 a0"
+	nodes := buildFuncNode(nodeSeq)
+	testCases := []struct {
+		position  suffixtree.Pos
+		length    suffixtree.Pos
+		threshold int
+		expected  []int
+	}{
+		{0, 12, 3, []int{0, 9}},
+		{0, 12, 4, []int{0}},
+		{2, 9, 2, []int{0, 9}},
+		{2, 9, 3, []int{0}},
+	}
+Loop:
+	for _, tc := range testCases {
+		indexes := getFuncIndexes(nodes, tc.position, tc.length, tc.threshold)
+		for i := range tc.expected {
+			if len(tc.expected) != len(indexes) || tc.expected[i] != indexes[i] {
+				t.Errorf("for seq '%s', got %v, want %v", nodeSeq, indexes, tc.expected)
+				continue Loop
+			}
+		}
+	}
+}
+
+func buildFuncNode(str string) []*Node {
+	chars := []rune(str)
+	nodes := make([]*Node, (len(chars)+1)/3)
+	for i := 0; i < len(chars)-1; i += 3 {
+		own := int(chars[i+1] - '0')
+		nodeT := int(chars[i])
+		if chars[i] == 'f' {
+			nodeT = 21 // FuncDecl
+		}
+		pos := i / 3
+		end := pos + own
+		nodes[i/3] = &Node{Type: nodeT, Owns: own, Pos: pos, End: end}
+	}
+	return nodes
 }
 
 func TestGetUnitsIndexes(t *testing.T) {

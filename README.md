@@ -12,7 +12,7 @@ tokens are completely different).
 ## Installation
 
 ```bash
-go get -u github.com/mibk/dupl
+go get -u github.com/kivihub/dupl
 ```
 
 ## Usage
@@ -42,6 +42,14 @@ Flags:
         check files in vendor directory
   -v, -verbose
         explain what is being done
+  -ft, -funcThreshold num
+     	minimum lines of function duplicate, plumbing output change to 
+     	function's duplicates instead of file's duplicate
+  -fr, -funcRatio num
+        minimum proportion of duplicate lines to the total number of lines 
+        within its function, value range is [0, 100]
+  -ignoreCodegen
+        ignore codegen file, accelerate parsing speeds
 
 Examples:
   dupl -t 100
@@ -56,7 +64,7 @@ Examples:
 ## Example
 
 The reduced output of this command with the following parameters for the [Docker](https://www.docker.com) source code
-looks like [this](http://htmlpreview.github.io/?https://github.com/mibk/dupl/blob/master/_output_example/docker.html).
+looks like [this](http://htmlpreview.github.io/?https://github.com/kivihub/dupl/blob/master/_output_example/docker.html).
 
 ```bash
 $ dupl -t 200 -html >docker.html

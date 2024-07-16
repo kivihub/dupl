@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
-	"github.com/mibk/dupl/syntax"
+	"github.com/kivihub/dupl/syntax"
 )
 
 type plumbing struct {
-	w io.Writer
+	printedDuplPairs map[string]bool
+	w                io.Writer
 	ReadFile
 }
 
 func NewPlumbing(w io.Writer, fread ReadFile) Printer {
-	return &plumbing{w, fread}
+	return &plumbing{make(map[string]bool), w, fread}
 }
 
 func (p *plumbing) PrintHeader() error { return nil }
@@ -27,6 +29,9 @@ func (p *plumbing) PrintClones(dups [][]*syntax.Node) error {
 	sort.Sort(byNameAndLine(clones))
 	for i, cl := range clones {
 		nextCl := clones[(i+1)%len(clones)]
+		if p.hasPrinted(cl.filename, cl.lineStart, cl.lineEnd, nextCl.filename, nextCl.lineStart, nextCl.lineEnd) {
+			continue
+		}
 		fmt.Fprintf(p.w, "%s:%d-%d: duplicate of %s:%d-%d\n", cl.filename, cl.lineStart, cl.lineEnd,
 			nextCl.filename, nextCl.lineStart, nextCl.lineEnd)
 	}
@@ -34,3 +39,19 @@ func (p *plumbing) PrintClones(dups [][]*syntax.Node) error {
 }
 
 func (p *plumbing) PrintFooter() error { return nil }
+
+func (p *plumbing) hasPrinted(f1 string, st1, end1 int, f2 string, st2, end2 int) bool {
+	left := fmt.Sprintf("%s:%d-%d", f1, st1, end1)
+	right := fmt.Sprintf("%s:%d-%d", f2, st2, end2)
+
+	duplPair := []string{left, right}
+	sort.Strings(duplPair)
+
+	key := strings.Join(duplPair, "#")
+	if _, exist := p.printedDuplPairs[key]; exist {
+		return true
+	} else {
+		p.printedDuplPairs[key] = true
+		return false
+	}
+}

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/mibk/dupl/syntax"
+	"github.com/kivihub/dupl/syntax"
 )
 
 type htmlprinter struct {

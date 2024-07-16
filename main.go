@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/kivihub/dupl/utils"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mibk/dupl/job"
-	"github.com/mibk/dupl/printer"
-	"github.com/mibk/dupl/syntax"
+	"github.com/kivihub/dupl/job"
+	"github.com/kivihub/dupl/printer"
+	"github.com/kivihub/dupl/syntax"
 )
 
 const defaultThreshold = 15
@@ -22,11 +23,14 @@ var (
 	paths     = []string{"."}
 	vendor    = flag.Bool("vendor", false, "")
 	verbose   = flag.Bool("verbose", false, "")
-	threshold = flag.Int("threshold", defaultThreshold, "")
+	threshold = flag.Int("threshold", defaultThreshold, "") // Token阈值
 	files     = flag.Bool("files", false, "")
+	html      = flag.Bool("html", false, "")
+	plumbing  = flag.Bool("plumbing", false, "")
 
-	html     = flag.Bool("html", false, "")
-	plumbing = flag.Bool("plumbing", false, "")
+	funcThreshold = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
+	funcRatio     = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：0-99
+	ignoreCodegen = flag.Bool("ignoreCodegen", false, "")
 )
 
 const (
@@ -37,6 +41,8 @@ const (
 func init() {
 	flag.BoolVar(verbose, "v", false, "alias for -verbose")
 	flag.IntVar(threshold, "t", defaultThreshold, "alias for -threshold")
+	flag.IntVar(funcThreshold, "ft", 0, "alias for -funcThreshold")
+	flag.IntVar(funcRatio, "fr", 0, "alias for -funcRatio")
 }
 
 func main() {
@@ -67,7 +73,12 @@ func main() {
 	duplChan := make(chan syntax.Match)
 	go func() {
 		for m := range mchan {
-			match := syntax.FindSyntaxUnits(*data, m, *threshold)
+			var match syntax.Match
+			if *funcThreshold == 0 {
+				match = syntax.FindSyntaxUnits(*data, m, *threshold)
+			} else {
+				match = syntax.FindFuncUnits(*data, m, *funcThreshold, *funcRatio)
+			}
 			if len(match.Frags) > 0 {
 				duplChan <- match
 			}
@@ -121,6 +132,9 @@ func crawlPaths(paths []string) chan string {
 					return nil
 				}
 				if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
+					if *ignoreCodegen && utils.IsCodegen(path) {
+						return nil
+					}
 					fchan <- path
 				}
 				return nil
@@ -159,6 +173,7 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	return p.PrintFooter()
 }
 
+// 按 [Filename & Position] 去重
 func unique(group [][]*syntax.Node) [][]*syntax.Node {
 	fileMap := make(map[string]map[int]struct{})
 
@@ -201,7 +216,15 @@ Flags:
   -vendor
     	check files in vendor directory
   -v, -verbose
-    	explain what is being done
+    	explain what is being do
+  -ft, -funcThreshold num
+     	minimum lines of function duplicate, plumbing output change to 
+     	function's duplicates instead of file's duplicate
+  -fr, -funcRatio num
+        minimum proportion of duplicate lines to the total number of lines 
+        within its function, value range is [0, 100]
+  -ignoreCodegen
+        ignore codegen file, accelerate parsing speed
 
 Examples:
   dupl -t 100

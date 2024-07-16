@@ -5,7 +5,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/mibk/dupl/syntax"
+	"github.com/kivihub/dupl/syntax"
 )
 
 type text struct {

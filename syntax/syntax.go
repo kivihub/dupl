@@ -2,16 +2,16 @@ package syntax
 
 import (
 	"crypto/sha1"
-
-	"github.com/mibk/dupl/suffixtree"
+	"github.com/kivihub/dupl/suffixtree"
 )
 
 type Node struct {
-	Type     int
-	Filename string
-	Pos, End int
-	Children []*Node
-	Owns     int
+	Type               int
+	Filename           string
+	Pos, End           int
+	StartLine, EndLine int
+	Children           []*Node
+	Owns               int
 }
 
 func NewNode() *Node {
@@ -63,7 +63,7 @@ func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
 		firstn := firstSeq[lasti]    // {firstSeq}中最后完整AstNode的Index - 对应的Node
 		for i := 1; i < len(m.Ps); i++ {
 			n := data[int(m.Ps[i])+lasti]
-			if firstn.Owns != n.Owns { // 最后一个重复AstNode的Own校验：保证重复两方的AstNode的Children数量相同；（）
+			if firstn.Owns != n.Owns { // 最后一个重复AstNode的Own校验：保证重复两方的AstNode的Children数量相同；
 				indexes = indexes[:indexCnt-1]
 				break
 			}

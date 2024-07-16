@@ -1,0 +1,26 @@
+package demo
+
+func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
+	groups := make(map[string][][]*syntax.Node)
+	for dupl := range duplChan {
+		groups[dupl.Hash] = append(groups[dupl.Hash], dupl.Frags...)
+	}
+	keys := make([]string, 0, len(groups))
+	for k := range groups {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	if err := p.PrintHeader(); err != nil {
+		return err
+	}
+	for _, k := range keys {
+		uniq := unique(groups[k])
+		if len(uniq) > 1 {
+			if err := p.PrintClones(uniq); err != nil {
+				return err
+			}
+		}
+	}
+	return p.PrintFooter()
+}
