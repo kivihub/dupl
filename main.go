@@ -148,6 +148,9 @@ func crawlPaths(paths []string) chan string {
 	return fchan
 }
 
+// 通过两个逻辑保留最长重复串：
+// 1）由于是深度遍历所以{duplChan}会首先读取到长串，然后append到groups
+// 2）通过[filename & Position]进行Uniq去重，去重后面出现的较短的重复串
 func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	groups := make(map[string][][]*syntax.Node)
 	for dupl := range duplChan {
@@ -165,6 +168,7 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	for _, k := range keys {
 		uniq := unique(groups[k])
 		if len(uniq) > 1 {
+			// 打印本重复组
 			if err := p.PrintClones(uniq); err != nil {
 				return err
 			}

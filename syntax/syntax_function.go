@@ -26,7 +26,7 @@ func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold, funcRatio in
 		return Match{}
 	}
 
-	match.Hash = hashSeq(data[m.Ps[0] : m.Ps[0]+m.Len]) // not work nicely, should unique duplicate pair while printing
+	match.Hash = hashSeq(data[m.Ps[0] : m.Ps[0]+m.Len]) // Hash为重复度组的分组标识
 	return match
 }
 

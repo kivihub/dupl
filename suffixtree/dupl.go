@@ -67,7 +67,7 @@ func (t *STree) FindDuplOver(threshold int) <-chan Match {
 }
 
 // DPS遍历后缀树
-// length为根结点走完parent的长度
+// length为根结点走完parent的长度，会重复返回，即返回起始点相同但长度不同的Match结果，在print时进行过滤
 func walkTrans(parent *tran, length, threshold int, ch chan<- Match) *contextList {
 	s := parent.state
 
