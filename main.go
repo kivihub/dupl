@@ -29,7 +29,7 @@ var (
 	plumbing  = flag.Bool("plumbing", false, "")
 
 	funcThreshold = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
-	funcRatio     = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：0-99
+	funcRatio     = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：0-99, 与-plumbing配合使用
 	ignoreCodegen = flag.Bool("ignoreCodegen", false, "")
 )
 
@@ -58,6 +58,7 @@ func main() {
 	if *verbose {
 		log.Println("Building suffix tree")
 	}
+	syntax.InitFuncDuplManager(*funcRatio)
 	schan := job.Parse(filesFeed())
 	t, data, done := job.BuildTree(schan)
 	<-done
@@ -77,7 +78,7 @@ func main() {
 			if *funcThreshold == 0 {
 				match = syntax.FindSyntaxUnits(*data, m, *threshold)
 			} else {
-				match = syntax.FindFuncUnits(*data, m, *funcThreshold, *funcRatio)
+				match = syntax.FindFuncUnits(*data, m, *funcThreshold)
 			}
 			if len(match.Frags) > 0 {
 				duplChan <- match
@@ -165,6 +166,7 @@ func printDupls(p printer.Printer, duplChan <-chan syntax.Match) error {
 	if err := p.PrintHeader(); err != nil {
 		return err
 	}
+	syntax.GlobalFuncDuplManager.RemoveFuncLessRatio()
 	for _, k := range keys {
 		uniq := unique(groups[k])
 		if len(uniq) > 1 {
@@ -226,7 +228,7 @@ Flags:
      	function's duplicates instead of file's duplicate
   -fr, -funcRatio num
         minimum proportion of duplicate lines to the total number of lines 
-        within its function, value range is [0, 100]
+        within its function, value range is [0, 100]. used with flag -plumbing
   -ignoreCodegen
         ignore codegen file, accelerate parsing speed
 

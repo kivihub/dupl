@@ -47,7 +47,7 @@ Flags:
      	function's duplicates instead of file's duplicate
   -fr, -funcRatio num
         minimum proportion of duplicate lines to the total number of lines 
-        within its function, value range is [0, 100]
+        within its function, value range is [0, 100]. used with flag -plumbing
   -ignoreCodegen
         ignore codegen file, accelerate parsing speeds
 
