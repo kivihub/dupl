@@ -8,14 +8,16 @@ import (
 
 var GlobalFuncDuplManager *FuncDuplManager
 
-func InitFuncDuplManager(funcDuplRatio int) {
+func InitFuncDuplManager(funcDuplRatio int, verbose bool) {
 	GlobalFuncDuplManager = &FuncDuplManager{
+		verbose:       verbose,
 		funcDuplRatio: funcDuplRatio,
 		funcDuplFrags: make(map[string]*FuncDupl),
 	}
 }
 
 type FuncDuplManager struct {
+	verbose       bool
 	funcDuplRatio int
 	funcDuplFrags map[string]*FuncDupl // key为file:funcPosition
 }
@@ -66,7 +68,9 @@ func (m *FuncDuplManager) RemoveFuncLessRatio() {
 			dupls = append(dupls, fmt.Sprintf("%d-%d", frag.StartLine, frag.EndLine))
 		}
 		realRatio := 100 * totalDuplLines / funcLines
-		log.Printf("Function:%s DuplRatio:%d%% DuplFrags:%v\n", nodeKey(funcNode), realRatio, utils.MarshalPretty(dupls))
+		if m.verbose {
+			log.Printf("Function:%s DuplRatio:%d%% DuplFrags:%v\n", nodeKey(funcNode), realRatio, utils.MarshalPretty(dupls))
+		}
 		if realRatio < m.funcDuplRatio {
 			delete(m.funcDuplFrags, key)
 		}

@@ -5,11 +5,11 @@ import (
 	"log"
 )
 
-func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold int) Match {
+func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold int, verbose bool) Match {
 	match := Match{Frags: make([][]*Node, len(m.Ps))}
 	// m.Ps是多个重复Ast的起始位置，如abcdecde，其中cdf重复，那么m.Ps就是[2,5]数组
 	for i, pos := range m.Ps {
-		indexes := getFuncIndexes(data, pos, m.Len, funcThreshold)
+		indexes := getFuncIndexes(data, pos, m.Len, funcThreshold, verbose)
 		if len(indexes) == 0 {
 			return Match{}
 		}
@@ -25,7 +25,7 @@ func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold int) Match {
 }
 
 // nodeSeq解析为多个重复的函数段，并过滤小于函数阈值的函数
-func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold int) []int {
+func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold int, verbose bool) []int {
 	var indexes []int
 
 	nodeSeq := data[position : position+length]
@@ -46,7 +46,9 @@ func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold
 
 		// 3. 超过阈值则加入{indexes}
 		if dupLines >= funcThreshold {
-			log.Printf("duplicate lines %s:%d-%d", funcNode.Filename, n.StartLine, duplLastNode.StartLine)
+			if verbose {
+				log.Printf("duplicate lines %s:%d-%d\n", funcNode.Filename, n.StartLine, duplLastNode.StartLine)
+			}
 			indexes = append(indexes, funcNodeIndex)
 			GlobalFuncDuplManager.AddDuplFrag(funcNode, n.StartLine, duplLastNode.StartLine)
 		}

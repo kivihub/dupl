@@ -58,7 +58,7 @@ func main() {
 	if *verbose {
 		log.Println("Building suffix tree")
 	}
-	syntax.InitFuncDuplManager(*funcRatio)
+	syntax.InitFuncDuplManager(*funcRatio, *verbose)
 	schan := job.Parse(filesFeed())
 	t, data, done := job.BuildTree(schan)
 	<-done
@@ -78,7 +78,7 @@ func main() {
 			if *funcThreshold == 0 {
 				match = syntax.FindSyntaxUnits(*data, m, *threshold)
 			} else {
-				match = syntax.FindFuncUnits(*data, m, *funcThreshold)
+				match = syntax.FindFuncUnits(*data, m, *funcThreshold, *verbose)
 			}
 			if len(match.Frags) > 0 {
 				duplChan <- match

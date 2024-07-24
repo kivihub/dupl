@@ -13,7 +13,7 @@ import (
 
 func TestNewFlag(t *testing.T) {
 	filePath := []string{"_input_example/clone_left.txt", "_input_example/clone_right.txt"}
-	os.Args = []string{"-t=100", "-ft=20", "-fr=25", "-ignoreCodegen", "-plumbing", "."}
+	os.Args = []string{"-t=100", "-ft=20", "-fr=30", "-ignoreCodegen", "-plumbing", "."}
 	runMockMain(t, filePath, func(output string) {
 		convey.So(strings.Count(output, "duplicate of"), assertions.ShouldEqual, 1)
 	})
