@@ -32,6 +32,10 @@ type DuplFrag struct {
 	EndLine   int
 }
 
+func (m *FuncDuplManager) BothFuncNeedExceedRatio() bool {
+	return m.funcDuplRatio > 0
+}
+
 func (m *FuncDuplManager) AddDuplFrag(funcNode *Node, duplStartLine, duplEndLine int) {
 	if m.funcDuplRatio == 0 {
 		return
@@ -71,7 +75,7 @@ func (m *FuncDuplManager) RemoveFuncLessRatio() {
 		if m.verbose {
 			log.Printf("Function:%s DuplRatio:%d%% DuplFrags:%v\n", nodeKey(funcNode), realRatio, utils.MarshalPretty(dupls))
 		}
-		if realRatio < m.funcDuplRatio {
+		if realRatio < utils.IntAbs(m.funcDuplRatio) {
 			delete(m.funcDuplFrags, key)
 		}
 	}

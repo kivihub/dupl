@@ -32,9 +32,20 @@ func (p *plumbing) PrintClones(dups [][]*syntax.Node) error {
 		if p.hasPrinted(cl.filename, cl.lineStart, cl.lineEnd, nextCl.filename, nextCl.lineStart, nextCl.lineEnd) {
 			continue
 		}
-		if syntax.GlobalFuncDuplManager.Exist(cl.filename, cl.lineStart) || syntax.GlobalFuncDuplManager.Exist(nextCl.filename, nextCl.lineStart) {
+
+		f1ExceedRatio := syntax.GlobalFuncDuplManager.Exist(cl.filename, cl.lineStart)
+		f2ExceedRatio := syntax.GlobalFuncDuplManager.Exist(nextCl.filename, nextCl.lineStart)
+
+		var printDuplPair bool
+		if syntax.GlobalFuncDuplManager.BothFuncNeedExceedRatio() {
+			printDuplPair = f1ExceedRatio && f2ExceedRatio
+		} else {
+			printDuplPair = f1ExceedRatio || f2ExceedRatio
+		}
+		if printDuplPair {
 			fmt.Fprintf(p.w, "%s:%d-%d: duplicate of %s:%d-%d\n", cl.filename, cl.lineStart, cl.lineEnd, nextCl.filename, nextCl.lineStart, nextCl.lineEnd)
 		}
+
 	}
 	return nil
 }

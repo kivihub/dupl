@@ -47,7 +47,11 @@ Flags:
      	function's duplicates instead of file's duplicate
   -fr, -funcRatio num
         minimum proportion of duplicate lines to the total number of lines 
-        within its function, value range is [0, 100]. used with flag -plumbing
+        within its function, value range is [-100, 100]. 
+        A positive number means that both duplicate function pairs need to 
+        exceed the threshold, and a negative number means that any function 
+        of the duplicate function pair can exceed the threshold. 
+        used with flag -plumbing
   -ignoreCodegen
         ignore codegen file, accelerate parsing speeds
 
