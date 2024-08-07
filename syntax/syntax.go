@@ -12,6 +12,7 @@ type Node struct {
 	StartLine, EndLine int
 	Children           []*Node
 	Owns               int
+	Source             string
 }
 
 func NewNode() *Node {
@@ -53,7 +54,7 @@ func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
 	if len(m.Ps) == 0 {
 		return Match{}
 	}
-	firstSeq := data[m.Ps[0] : m.Ps[0]+m.Len]
+	firstSeq := data[m.Ps[0] : m.Ps[0]+m.Len]       // 最后一个元素
 	indexes := getUnitsIndexes(firstSeq, threshold) // 计算连续的完整AstNode在{firstSeq}中的Index集合
 
 	// TODO: is this really working?
@@ -91,6 +92,7 @@ func FindSyntaxUnits(data []*Node, m suffixtree.Match, threshold int) Match {
 	return match
 }
 
+// 返回连续的多个AstNode的Index，其中每个AstNode的owns超过阈值threshold
 func getUnitsIndexes(nodeSeq []*Node, threshold int) []int {
 	var indexes []int
 	var split bool // 标识是否连续，如果为true则表示不连续，需要clear {indexes}

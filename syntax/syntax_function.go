@@ -6,6 +6,10 @@ import (
 )
 
 func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold int, verbose bool) Match {
+	if len(m.Ps) == 0 {
+		return Match{}
+	}
+
 	match := Match{Frags: make([][]*Node, len(m.Ps))}
 	// m.Ps是多个重复Ast的起始位置，如abcdecde，其中cdf重复，那么m.Ps就是[2,5]数组
 	for i, pos := range m.Ps {
@@ -40,17 +44,19 @@ func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold
 		funcNode := data[funcNodeIndex]
 
 		// 2. 获取函数的重复行数
-		duplLastNodeIndex := getFuncDuplLastNodeIndex(nodeSeq, i, funcNode)
-		duplLastNode := nodeSeq[duplLastNodeIndex]
-		dupLines := duplLastNode.StartLine - n.StartLine + 1
+		duplLastNodeIndex, lastLine := getFuncDuplLastNodeIndexAndLine(nodeSeq, i, funcNode)
+		if duplLastNodeIndex == -1 || lastLine == -1 {
+			panic("Unexpect error at getFuncDuplLastNodeIndexAndLine")
+		}
+		dupLines := lastLine - n.StartLine + 1
 
 		// 3. 超过阈值则加入{indexes}
 		if dupLines >= funcThreshold {
 			if verbose {
-				log.Printf("duplicate lines %s:%d-%d\n", funcNode.Filename, n.StartLine, duplLastNode.StartLine)
+				log.Printf("duplicate lines %s:%d-%d\n", funcNode.Filename, n.StartLine, lastLine)
 			}
 			indexes = append(indexes, funcNodeIndex)
-			GlobalFuncDuplManager.AddDuplFrag(funcNode, n.StartLine, duplLastNode.StartLine)
+			GlobalFuncDuplManager.AddDuplFrag(funcNode, n.StartLine, lastLine)
 		}
 
 		// 4. i = FuncEnd Index + 1
@@ -59,17 +65,29 @@ func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold
 	return indexes
 }
 
-func getFuncDuplLastNodeIndex(nodeSeq []*Node, i int, node *Node) int {
-	lastIndex := i
-	for i++; i < len(nodeSeq); i++ {
+func getFuncDuplLastNodeIndexAndLine(nodeSeq []*Node, i int, funcNode *Node) (int, int) {
+	lastLine := -1
+	lastIndex := -1
+	for i < len(nodeSeq) {
 		cur := nodeSeq[i]
-		if cur.Filename != node.Filename || cur.Pos > node.End {
+		if cur.Filename != funcNode.Filename || cur.Pos > funcNode.End {
 			break
+		}
+
+		if cur.Owns < len(nodeSeq)-i { // 完整语法块在重复段内
+			lastIndex = i + cur.Owns
+			if cur.EndLine > lastLine {
+				lastLine = cur.EndLine
+			}
 		} else {
 			lastIndex = i
+			if cur.StartLine > lastLine {
+				lastLine = cur.StartLine
+			}
 		}
+		i = lastIndex + 1
 	}
-	return lastIndex
+	return lastIndex, lastLine
 }
 
 func findBelongsFuncNode(node *Node, data []*Node, position suffixtree.Pos) int {

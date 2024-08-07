@@ -1,9 +1,11 @@
 package golang
 
 import (
+	"github.com/kivihub/dupl/context"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
 
 	"github.com/kivihub/dupl/syntax"
 )
@@ -86,7 +88,10 @@ func (t *transformer) trans(node ast.Node) (o *syntax.Node) {
 	st, end := node.Pos(), node.End()
 	o.StartLine, o.EndLine = t.fileset.Position(st).Line, t.fileset.Position(end).Line
 	o.Pos, o.End = t.fileset.File(st).Offset(st), t.fileset.File(end).Offset(end)
-
+	if context.IsDebug {
+		bytes, _ := ioutil.ReadFile(o.Filename)
+		o.Source = string(bytes[o.Pos:o.End])
+	}
 	switch n := node.(type) {
 	case *ast.ArrayType:
 		o.Type = ArrayType

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/bytedance/mockey"
+	"github.com/kivihub/dupl/context"
 	"github.com/smartystreets/assertions"
 	"github.com/smartystreets/goconvey/convey"
 	"os"
@@ -12,8 +13,10 @@ import (
 )
 
 func TestNewFlag(t *testing.T) {
+	context.IsDebug = true
 	filePath := []string{"_input_example/clone_left.txt", "_input_example/clone_right.txt"}
 	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=30", "-ignoreCodegen", "-plumbing", "-verbose"}
+	//os.Args = []string{"dupl", "-t=100", "-plumbing", "-verbose"}
 	runMockMain(t, filePath, func(output string) {
 		convey.So(strings.Count(output, "duplicate of"), assertions.ShouldEqual, 1)
 	})
