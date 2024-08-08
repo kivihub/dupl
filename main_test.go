@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-func TestNewFlag(t *testing.T) {
+func TestDuplForPath(t *testing.T) {
 	context.IsDebug = true
 	filePath := []string{"_input_example/clone_left.txt", "_input_example/clone_right.txt"}
 	filePath = InsertPackageInfo(filePath)
@@ -22,6 +22,12 @@ func TestNewFlag(t *testing.T) {
 	runMockMain(t, filePath, func(output string) {
 		convey.So(strings.Count(output, "duplicate of"), assertions.ShouldEqual, 1)
 	})
+}
+
+func TestDuplForDir(t *testing.T) {
+	dir := "."
+	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=30", "-ignoreCodegen", "-maxFileSize=1048576", "-plumbing", "-verbose", dir}
+	main()
 }
 
 func InsertPackageInfo(filePaths []string) []string {
@@ -58,6 +64,7 @@ func runMockMain(t *testing.T, filePath []string, processOutput func(string)) {
 	})
 }
 
+// CaptureStdout 目前只适合拦截少量输出，如果过大超过缓冲区，则会阻塞
 func CaptureStdout() func() string {
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()

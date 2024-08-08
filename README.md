@@ -54,6 +54,8 @@ Flags:
         used with flag -plumbing
   -ignoreCodegen
         ignore codegen file, accelerate parsing speeds
+  -maxFileSize
+        ignore file when file size exceed maxFileSize
 
 Examples:
   dupl -t 100
