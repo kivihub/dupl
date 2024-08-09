@@ -34,12 +34,17 @@ func InsertPackageInfo(filePaths []string) []string {
 	pkg := []byte("package demo\n")
 	ret := make([]string, len(filePaths))
 	for i, path := range filePaths {
-		dir, file := filepath.Split(path)
-		newPath := dir + "." + file
 		bytes, _ := os.ReadFile(path)
-		bytes = append(pkg, bytes...)
-		os.WriteFile(newPath, bytes, os.FileMode(0666))
-		ret[i] = newPath
+		if strings.Index(string(bytes), "package ") == 0 {
+			tmp := path
+			ret[i] = tmp
+		} else {
+			dir, file := filepath.Split(path)
+			newPath := dir + "." + file
+			bytes = append(pkg, bytes...)
+			os.WriteFile(newPath, bytes, os.FileMode(0666))
+			ret[i] = newPath
+		}
 	}
 	return ret
 }
