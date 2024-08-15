@@ -57,6 +57,7 @@ func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold
 			}
 			indexes = append(indexes, funcNodeIndex)
 			GlobalFuncDuplManager.AddDuplFrag(funcNode, n.StartLine, lastLine)
+			return indexes
 		}
 
 		// 4. i = FuncEnd Index + 1
