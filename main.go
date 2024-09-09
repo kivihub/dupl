@@ -7,7 +7,6 @@ import (
 	"github.com/kivihub/dupl/utils"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,7 +31,7 @@ var (
 	funcThreshold = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
 	funcRatio     = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：[-100, 100], 与-plumbing配合使用
 	ignoreCodegen = flag.Bool("ignoreCodegen", false, "")
-	maxFileSize   = flag.Int("maxFileSize", math.MaxInt, "") // 支持的最大文件大小，防止大文件阻塞
+	maxFileSize   = flag.String("maxFileSize", "", "") // 支持的最大文件大小，防止大文件阻塞
 )
 
 const (
@@ -61,7 +60,9 @@ func main() {
 		log.Println("Building suffix tree")
 	}
 	syntax.InitFuncDuplManager(*funcRatio, *verbose)
-	schan := job.Parse(filesFeed(), *maxFileSize)
+	maxFileSizeInt := utils.ParseStorageToBytes(*maxFileSize)
+	log.Printf("Flag maxFileSize: %s -> %d Bytes", *maxFileSize, maxFileSizeInt)
+	schan := job.Parse(filesFeed(), int(maxFileSizeInt))
 	t, data, done := job.BuildTree(schan)
 	<-done
 

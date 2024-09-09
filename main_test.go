@@ -26,7 +26,7 @@ func TestDuplForPath(t *testing.T) {
 
 func TestDuplForDir(t *testing.T) {
 	dir := "."
-	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=30", "-ignoreCodegen", "-maxFileSize=1048576", "-plumbing", "-verbose", dir}
+	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=80", "-ignoreCodegen", "-maxFileSize=100KB", "-plumbing", "-verbose", dir}
 	main()
 }
 
