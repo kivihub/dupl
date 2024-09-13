@@ -52,8 +52,10 @@ Flags:
         exceed the threshold, and a negative number means that any function 
         of the duplicate function pair can exceed the threshold. 
         used with flag -plumbing
-  -ignoreCodegen
-        ignore codegen file, accelerate parsing speeds
+  -ignorePath     
+        ignore files it's path matching the given regexp
+  -ignoreContent  
+        ignore files it's content matching the given regexp
   -maxFileSize
         ignore file when file size exceed maxFileSize
 

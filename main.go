@@ -30,8 +30,8 @@ var (
 
 	funcThreshold         = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
 	funcRatio             = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：[-100, 100], 与-plumbing配合使用
-	ignoreFilePathExpr    = *flag.String("ignorePath", "", "ignore files it's path matching the given regexp")
-	ignoreFileContentExpr = *flag.String("ignoreContent", "", "ignore files it's content matching the given regexp")
+	ignoreFilePathExpr    = flag.String("ignorePath", "", "ignore files it's path matching the given regexp")
+	ignoreFileContentExpr = flag.String("ignoreContent", "", "ignore files it's content matching the given regexp")
 	maxFileSize           = flag.String("maxFileSize", "", "") // 支持的最大文件大小，防止大文件阻塞
 )
 
@@ -57,6 +57,22 @@ func main() {
 		paths = flag.Args()
 	}
 
+	if *verbose {
+		param := map[string]interface{}{
+			"paths":             paths,
+			"-t/threshold":      *threshold,
+			"-ft/funcThreshold": *funcThreshold,
+			"-fr/funcRatio":     *funcRatio,
+			"ignorePath":        *ignoreFilePathExpr,
+			"ignoreContent":     *ignoreFileContentExpr,
+			"maxFileSize":       *maxFileSize,
+			"html":              *html,
+			"plumbing":          *plumbing,
+			"vendor":            *vendor,
+			"files":             *files,
+		}
+		log.Printf("Env param: %s\n", utils.MarshalPretty(param))
+	}
 	if *verbose {
 		log.Println("Building suffix tree")
 	}

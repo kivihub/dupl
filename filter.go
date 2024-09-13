@@ -36,11 +36,11 @@ var setIgnoreRegexp bool
 
 func InitIgnoreRegexBeforeAnalyze() {
 	if *verbose {
-		log.Printf("--Ignore file path regex is: %s\n", defaultVal(ignoreFilePathExpr, "<not_set>"))
-		log.Printf("--Ignore file content regex is: %s\n", defaultVal(ignoreFileContentExpr, "<not_set>"))
+		log.Printf("--Ignore file path regex is: %s\n", defaultVal(*ignoreFilePathExpr, "<not_set>"))
+		log.Printf("--Ignore file content regex is: %s\n", defaultVal(*ignoreFileContentExpr, "<not_set>"))
 	}
-	ignoreFilePathRegexp = prepareRegexp(ignoreFilePathExpr)
-	ignoreFileContentRegexp = prepareRegexp(ignoreFileContentExpr)
+	ignoreFilePathRegexp = prepareRegexp(*ignoreFilePathExpr)
+	ignoreFileContentRegexp = prepareRegexp(*ignoreFileContentExpr)
 	if ignoreFileContentRegexp != nil || ignoreFilePathRegexp != nil {
 		setIgnoreRegexp = true
 	}
@@ -49,7 +49,7 @@ func InitIgnoreRegexBeforeAnalyze() {
 func IgnoreFileByPath(filePath string) bool {
 	ignore := ignoreFilePathRegexp != nil && ignoreFilePathRegexp.MatchString(filePath)
 	if *verbose && ignore {
-		log.Printf("IgnoreFileByPath: %s -> %s\n", ignoreFilePathExpr, filePath)
+		log.Printf("IgnoreFileByPath: %s\n", filePath)
 	}
 	return ignore
 }
@@ -67,7 +67,7 @@ func IgnoreFileByContent(filePath string) bool {
 
 	ignore := ignoreFileContentRegexp.MatchString(string(contentBytes))
 	if *verbose && ignore {
-		log.Printf("IgnoreFileByContent: %s -> %s\n", ignoreFileContentExpr, filePath)
+		log.Printf("IgnoreFileByContent: %s\n", filePath)
 	}
 	return ignore
 }
