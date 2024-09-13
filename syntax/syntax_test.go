@@ -61,7 +61,7 @@ func TestGetFuncIndexes(t *testing.T) {
 	}
 Loop:
 	for _, tc := range testCases {
-		indexes := getFuncIndexes(nodes, tc.position, tc.length, tc.threshold)
+		indexes := getFuncIndexes(nodes, tc.position, tc.length, tc.threshold, true)
 		for i := range tc.expected {
 			if len(tc.expected) != len(indexes) || tc.expected[i] != indexes[i] {
 				t.Errorf("for seq '%s', got %v, want %v", nodeSeq, indexes, tc.expected)

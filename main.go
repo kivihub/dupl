@@ -28,10 +28,11 @@ var (
 	html      = flag.Bool("html", false, "")
 	plumbing  = flag.Bool("plumbing", false, "")
 
-	funcThreshold = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
-	funcRatio     = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：[-100, 100], 与-plumbing配合使用
-	ignoreCodegen = flag.Bool("ignoreCodegen", false, "")
-	maxFileSize   = flag.String("maxFileSize", "", "") // 支持的最大文件大小，防止大文件阻塞
+	funcThreshold         = flag.Int("funcThreshold", 0, "") // 函数重复行数阈值
+	funcRatio             = flag.Int("funcRatio", 0, "")     // 重复行数占所在函数总行数的最小比例阈值：[-100, 100], 与-plumbing配合使用
+	ignoreFilePathExpr    = *flag.String("ignorePath", "", "ignore files it's path matching the given regexp")
+	ignoreFileContentExpr = *flag.String("ignoreContent", "", "ignore files it's content matching the given regexp")
+	maxFileSize           = flag.String("maxFileSize", "", "") // 支持的最大文件大小，防止大文件阻塞
 )
 
 const (
@@ -59,6 +60,7 @@ func main() {
 	if *verbose {
 		log.Println("Building suffix tree")
 	}
+	InitIgnoreRegexBeforeAnalyze()
 	syntax.InitFuncDuplManager(*funcRatio, *verbose)
 	maxFileSizeInt := utils.ParseStorageToBytes(*maxFileSize)
 	log.Printf("Flag maxFileSize: %s -> %d Bytes", *maxFileSize, maxFileSizeInt)
@@ -136,7 +138,7 @@ func crawlPaths(paths []string) chan string {
 					return nil
 				}
 				if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
-					if *ignoreCodegen && utils.IsCodegen(path) {
+					if IgnoreFile(path) {
 						return nil
 					}
 					fchan <- path
@@ -236,8 +238,10 @@ Flags:
         exceed the threshold, and a negative number means that any function 
         of the duplicate function pair can exceed the threshold. 
         used with flag -plumbing
-  -ignoreCodegen
-        ignore codegen file, accelerate parsing speed
+  -ignorePath     
+        ignore files it's path matching the given regexp
+  -ignoreContent  
+        ignore files it's content matching the given regexp
   -maxFileSize
         ignore file when file size exceed maxFileSize
 

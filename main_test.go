@@ -17,7 +17,7 @@ func TestDuplForPath(t *testing.T) {
 	context.IsDebug = true
 	filePath := []string{"_input_example/clone_left.txt", "_input_example/clone_right.txt"}
 	filePath = InsertPackageInfo(filePath)
-	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=30", "-ignoreCodegen", "-plumbing", "-verbose"}
+	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=30", "-plumbing", "-verbose"}
 	//os.Args = []string{"dupl", "-t=100", "-plumbing", "-verbose"}
 	runMockMain(t, filePath, func(output string) {
 		convey.So(strings.Count(output, "duplicate of"), assertions.ShouldEqual, 1)
@@ -26,7 +26,7 @@ func TestDuplForPath(t *testing.T) {
 
 func TestDuplForDir(t *testing.T) {
 	dir := "."
-	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=80", "-ignoreCodegen", "-maxFileSize=100KB", "-plumbing", "-verbose", dir}
+	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=80", "-maxFileSize=100KB", "-plumbing", "-verbose", dir}
 	main()
 }
 
