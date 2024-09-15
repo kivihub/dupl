@@ -95,14 +95,20 @@ func main() {
 	duplChan := make(chan syntax.Match)
 	go func() {
 		for m := range mchan {
-			var match syntax.Match
 			if *funcThreshold == 0 {
-				match = syntax.FindSyntaxUnits(*data, m, *threshold)
+				var match = syntax.FindSyntaxUnits(*data, m, *threshold)
+				if len(match.Frags) > 0 {
+					duplChan <- match
+				}
 			} else {
-				match = syntax.FindFuncUnits(*data, m, *funcThreshold, *verbose)
-			}
-			if len(match.Frags) > 0 {
-				duplChan <- match
+				var matchs = syntax.FindFuncUnits(*data, m, *threshold, *funcThreshold, *verbose)
+				if matchs != nil {
+					for _, match := range matchs {
+						if len(match.Frags) > 0 {
+							duplChan <- match
+						}
+					}
+				}
 			}
 		}
 		close(duplChan)

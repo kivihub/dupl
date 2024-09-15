@@ -13,6 +13,8 @@ type Node struct {
 	Children           []*Node
 	Owns               int
 	Source             string
+	StartAtSuffixTree  int
+	EndAtSuffixTree    int
 }
 
 func NewNode() *Node {

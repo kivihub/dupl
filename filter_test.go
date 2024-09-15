@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/kivihub/dupl/utils"
 	"testing"
 )
 
 func TestIsCodegen(t *testing.T) {
-	v := true
-	verbose = &v
-	ignoreFileContentExpr = "// Code generated"
+	verbose = utils.BoolPtr(true)
+	ignoreFileContentExpr = utils.StringPtr("// Code generated")
 	InitIgnoreRegexBeforeAnalyze()
 
 	testCases := []struct {

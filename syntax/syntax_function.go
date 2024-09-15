@@ -1,38 +1,70 @@
 package syntax
 
 import (
+	"fmt"
 	"github.com/kivihub/dupl/suffixtree"
 	"log"
 )
 
-func FindFuncUnits(data []*Node, m suffixtree.Match, funcThreshold int, verbose bool) Match {
+func FindFuncUnits(data []*Node, m suffixtree.Match, tokenThreshold, funcThreshold int, verbose bool) []Match {
 	if len(m.Ps) == 0 {
-		return Match{}
+		return nil
 	}
 
-	match := Match{Frags: make([][]*Node, len(m.Ps))}
-	// m.Ps是多个重复Ast的起始位置，如abcdecde，其中cdf重复，那么m.Ps就是[2,5]数组
+	indexesMap := make(map[int][]int)
+	// m.Ps是多个重复Ast的起始位置，如abcdecde，其中cd重复，那么m.Ps就是[2,5]数组
 	for i, pos := range m.Ps {
-		indexes := getFuncIndexes(data, pos, m.Len, funcThreshold, verbose)
+		// indexes是一个重复片段内的多个函数的起始节点列表
+		indexes := getFuncIndexes(data, pos, m.Len, tokenThreshold, funcThreshold, verbose)
 		if len(indexes) == 0 {
-			return Match{}
+			return nil
 		}
+		indexesMap[i] = indexes
+	}
 
-		match.Frags[i] = make([]*Node, len(indexes))
-		for j, index := range indexes {
-			match.Frags[i][j] = data[index]
+	// 当重复行数从重复代码段中解析函数时，可能由于行数不同导致解析出不同的函数个数，这种Case则忽略
+	// 如重复片段1中的函数A不足20行，于此同时重复片段2中的函数B与函数A的内容相同，只是在其中增加了空行或者注释，最终使行数超过20行
+	// 这导致重复片段1解析的函数不包含函数A，而重复片段2解析的函数包含函数B。
+	duplFuncGroupNum := len(indexesMap[0])
+	for _, indexes := range indexesMap {
+		if len(indexes) != duplFuncGroupNum {
+			msg := ""
+			for _, ints := range indexesMap {
+				for _, i3 := range ints {
+					msg += fmt.Sprintf("%s:%d\n", data[i3].Filename, data[i3].StartLine)
+				}
+				msg += "\n"
+			}
+			fmt.Printf(fmt.Sprintf("Warn found different function number in match, Detail:\n%s", msg))
+			return nil
 		}
 	}
 
-	match.Hash = hashSeq(data[m.Ps[0] : m.Ps[0]+m.Len]) // Hash为重复度组的分组标识
-	return match
+	duplFuncNumPerGroup := len(indexesMap)
+	matchs := make([]Match, duplFuncGroupNum)
+	for groupIndex := 0; groupIndex < duplFuncGroupNum; groupIndex++ {
+		matchs[groupIndex] = Match{Frags: make([][]*Node, duplFuncNumPerGroup)}
+
+		for funcIndex := 0; funcIndex < duplFuncNumPerGroup; funcIndex++ {
+			matchs[groupIndex].Frags[funcIndex] = make([]*Node, 1)
+			matchs[groupIndex].Frags[funcIndex][0] = data[indexesMap[funcIndex][groupIndex]]
+		}
+		funcNode := matchs[groupIndex].Frags[0][0]
+		if funcNode.EndAtSuffixTree < funcNode.StartAtSuffixTree {
+			fmt.Printf("a")
+		}
+		matchs[groupIndex].Hash = hashSeq(data[funcNode.StartAtSuffixTree:funcNode.EndAtSuffixTree]) // Hash为重复度组的分组标识
+	}
+
+	return matchs
 }
 
 // nodeSeq解析为多个重复的函数段，并过滤小于函数阈值的函数
-func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold int, verbose bool) []int {
+func getFuncIndexes(data []*Node, position, length suffixtree.Pos, tokenThreshold, funcThreshold int, verbose bool) []int {
 	var indexes []int
 
 	nodeSeq := data[position : position+length]
+	duplFragPos := int(position)
 	for i := 0; i < len(nodeSeq); {
 		n := nodeSeq[i]
 		// 1. 获取结点所在的函数起始行
@@ -44,24 +76,27 @@ func getFuncIndexes(data []*Node, position, length suffixtree.Pos, funcThreshold
 		funcNode := data[funcNodeIndex]
 
 		// 2. 获取函数的重复行数
-		duplLastNodeIndex, lastLine := getFuncDuplLastNodeIndexAndLine(nodeSeq, i, funcNode)
-		if duplLastNodeIndex == -1 || lastLine == -1 {
+		duplLastNodeIndexAtNodeSeq, lastLine := getFuncDuplLastNodeIndexAndLine(nodeSeq, i, funcNode)
+		if duplLastNodeIndexAtNodeSeq == -1 || lastLine == -1 {
 			panic("Unexpect error at getFuncDuplLastNodeIndexAndLine")
 		}
 		dupLines := lastLine - n.StartLine + 1
+		duplLastNodeIndex := duplLastNodeIndexAtNodeSeq + int(position)
 
 		// 3. 超过阈值则加入{indexes}
-		if dupLines >= funcThreshold {
+		if duplLastNodeIndex-duplFragPos >= tokenThreshold && dupLines >= funcThreshold {
 			if verbose {
 				log.Printf("duplicate lines %s:%d-%d\n", funcNode.Filename, n.StartLine, lastLine)
 			}
 			indexes = append(indexes, funcNodeIndex)
+			funcNode.StartAtSuffixTree = funcNodeIndex
+			funcNode.EndAtSuffixTree = duplLastNodeIndex
 			GlobalFuncDuplManager.AddDuplFrag(funcNode, n.StartLine, lastLine)
-			return indexes
 		}
 
 		// 4. i = FuncEnd Index + 1
-		i = duplLastNodeIndex + 1
+		duplFragPos = duplLastNodeIndex + 1
+		i = duplLastNodeIndexAtNodeSeq + 1
 	}
 	return indexes
 }
