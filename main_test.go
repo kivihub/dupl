@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"github.com/bytedance/mockey"
 	"github.com/kivihub/dupl/context"
+	"github.com/kivihub/dupl/job"
+	"github.com/kivihub/dupl/syntax"
+	"github.com/kivihub/dupl/syntax/golang"
 	"github.com/smartystreets/assertions"
 	"github.com/smartystreets/goconvey/convey"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +20,7 @@ import (
 func TestDuplForPath(t *testing.T) {
 	context.IsDebug = true
 	filePath := []string{"_input_example/clone_left.txt", "_input_example/clone_right.txt"}
-	filePath = InsertPackageInfo(filePath)
+	filePath = insertPackageInfo(filePath)
 	os.Args = []string{"dupl", "-t=100", "-ft=20", "-fr=80", "-plumbing", "-verbose"}
 	//os.Args = []string{"dupl", "-t=100", "-plumbing", "-verbose"}
 	runMockMain(t, filePath, func(output string) {
@@ -35,7 +39,29 @@ func TestDuplForDir(t *testing.T) {
 	main()
 }
 
-func InsertPackageInfo(filePaths []string) []string {
+func TestPrintToken(t *testing.T) {
+	context.IsDebug = true
+	pathCha := make(chan string)
+	schan := job.Parse(pathCha, math.MaxInt)
+	tree, data, done := job.BuildTree(schan)
+	pathCha <- "_input_example/simple_assign.txt"
+	close(pathCha)
+	<-done
+	tree.Update(&syntax.Node{Type: -1})
+	lastLine := 0
+	for i, node := range *data {
+		if node.StartLine != node.EndLine {
+			continue
+		}
+		if lastLine != 0 && node.StartLine != lastLine {
+			fmt.Printf("\n")
+		}
+		fmt.Printf("Line:%2d,  NodeIndex: %2d,  Type: %13s,  Source:  %s\n", node.StartLine, i, golang.NodeTypeString(node.Type), node.Source)
+		lastLine = node.StartLine
+	}
+}
+
+func insertPackageInfo(filePaths []string) []string {
 	pkg := []byte("package demo\n")
 	ret := make([]string, len(filePaths))
 	for i, path := range filePaths {
@@ -66,7 +92,7 @@ func runMockMain(t *testing.T, filePath []string, processOutput func(string)) {
 			}()
 			return fchan
 		}()).Build()
-		endCapture := CaptureStdout()
+		endCapture := captureStdout()
 		main()
 		capturedContent := endCapture()
 		fmt.Print("Captured: ", capturedContent)
@@ -74,8 +100,8 @@ func runMockMain(t *testing.T, filePath []string, processOutput func(string)) {
 	})
 }
 
-// CaptureStdout 目前只适合拦截少量输出，如果过大超过缓冲区，则会阻塞
-func CaptureStdout() func() string {
+// captureStdout 目前只适合拦截少量输出，如果过大超过缓冲区，则会阻塞
+func captureStdout() func() string {
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w

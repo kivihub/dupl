@@ -1,0 +1,16 @@
+package demo
+
+func main() {
+    order := &demo.Order{
+        ID: input.ID,
+        Attr1: int64(input.Value1),
+        Attr2: convert(input.Value2),
+        Attr3: util.Parse(input.Value3),
+        Attr4: util.Parse(input.Value4),
+        Attr5: util.Read(input.Value5),
+        Attr6: now().Unix(),
+        Attr7: input.Value7,
+        Attr8: input.Value8,
+        Attr9: input.Value9,
+    }
+}
