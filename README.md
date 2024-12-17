@@ -75,5 +75,5 @@ The reduced output of this command with the following parameters for the [Docker
 looks like [this](http://htmlpreview.github.io/?https://github.com/kivihub/dupl/blob/master/_output_example/docker.html).
 
 ```bash
-$ dupl -t 200 -html >docker.html
+$ dupl -t 100 -ft 20 -fr 80 -maxFileSize 100KB -plumbing | tee dupl.txt
 ```
